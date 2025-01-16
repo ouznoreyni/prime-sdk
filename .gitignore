@@ -1,0 +1,36 @@
+# Ignore all system or editor-specific files
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# Ignore PHP specific
+*.log
+*.cache
+*.env
+vendor/        # Composer dependencies (can be installed using composer install)
+
+# Ignore JavaScript/Node.js specific
+node_modules/  # Node.js dependencies (can be installed using npm or yarn)
+dist/          # Build output folder
+*.log
+*.env
+
+# Ignore Java specific
+*.class        # Compiled class files
+*.jar          # Packaged JAR files
+*.war          # Packaged WAR files
+*.log
+target/        # Maven build output
+out/           # IntelliJ output directory
+
+# Ignore IDE and editor configurations
+.vscode/
+.idea/
+*.iml
+
+# Ignore OS-specific files
+.DS_Store
+*.tmp
