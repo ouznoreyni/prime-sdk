@@ -3,7 +3,7 @@
  * HMAC Verification Service
  *
  * This service handles HMAC-based request verification for secure API communications.
- * It verifies both the API key and HMAC signature of incoming requests.
+ * It verifies both the API key and HMAC signature of incoming requests using SHA512.
  *
  * Usage example:
  * ```php
@@ -23,7 +23,6 @@
 class HMACService {
     /** @var string The secret key used for HMAC signature generation */
     private string $hmacKey;
-
     /** @var string The API key for request authentication */
     private string $apiKey;
 
@@ -36,6 +35,13 @@ class HMACService {
      * @throws InvalidArgumentException If required configuration is missing
      */
     public function __construct(array $config) {
+        if (!isset($config['hmacKey']) || !is_string($config['hmacKey'])) {
+            throw new InvalidArgumentException("HMAC key is required and must be a string");
+        }
+        if (!isset($config['apiKey']) || !is_string($config['apiKey'])) {
+            throw new InvalidArgumentException("API key is required and must be a string");
+        }
+
         $this->hmacKey = $config['hmacKey'];
         $this->apiKey = $config['apiKey'];
     }
@@ -54,21 +60,31 @@ class HMACService {
      */
     public function verify(array $headers, array $payload): array {
         try {
-            // Convert all header keys to lowercase for case-insensitive comparison
+            // Normalize header keys to lowercase for case-insensitive comparison
             $normalizedHeaders = array_change_key_case($headers, CASE_LOWER);
-            
-            // Verify API key
-            if (!isset($normalizedHeaders['x-api-key']) || 
-                $normalizedHeaders['x-api-key'] !== $this->apiKey) {
-                return ['isValid' => false, 'error' => 'Invalid API key'];
-            }
 
-            // Check for HMAC signature
+            // Validate required headers
+            if (!isset($normalizedHeaders['x-api-key'])) {
+                return ['isValid' => false, 'error' => 'Missing API key'];
+            }
             if (!isset($normalizedHeaders['x-hmac-signature'])) {
                 return ['isValid' => false, 'error' => 'Missing HMAC signature'];
             }
 
-            // Verify signature
+            // Verify API key
+            if ($normalizedHeaders['x-api-key'] !== $this->apiKey) {
+                return ['isValid' => false, 'error' => 'Invalid API key'];
+            }
+
+            // Validate payload
+            $requiredFields = ['statusPayment', 'primeClientPhone', 'amount'];
+            foreach ($requiredFields as $field) {
+                if (!isset($payload[$field])) {
+                    return ['isValid' => false, 'error' => "Missing required field: $field"];
+                }
+            }
+
+            // Calculate and verify HMAC signature
             $providedSignature = $normalizedHeaders['x-hmac-signature'];
             $calculatedSignature = $this->calculateSignature($payload);
 
@@ -83,9 +99,9 @@ class HMACService {
     }
 
     /**
-     * Calculates HMAC signature for the given payload
+     * Calculates HMAC signature for the given payload using SHA512
      *
-     * The signature is calculated using SHA256 algorithm and base64 encoded.
+     * The signature is calculated using SHA512 algorithm and base64 encoded.
      * The data string for signature is constructed by concatenating:
      * statusPayment + primeClientPhone + amount
      *
@@ -95,10 +111,10 @@ class HMACService {
     public function calculateSignature(array $payload): string {
         // Concatenate required fields in specific order
         $dataToSign = $payload['statusPayment'] . $payload['primeClientPhone'] . $payload['amount'];
-        
-        // Calculate HMAC using SHA256
-        $hmac = hash_hmac('sha256', $dataToSign, $this->hmacKey, true);
-        
+
+        // Calculate HMAC using SHA512
+        $hmac = hash_hmac('sha512', $dataToSign, $this->hmacKey, true);
+
         // Return base64 encoded signature
         return base64_encode($hmac);
     }
