@@ -1,10 +1,9 @@
 /**
  * @fileoverview HMAC Verification SDK
  * This SDK provides HMAC-based request verification functionality for secure API communications.
- * It implements HMAC-SHA256 signature generation and verification along with API key validation.
- * @version 1.0.0
+ * It implements HMAC-SHA512 signature generation and verification along with API key validation.
+ * @version 1.0.1
  */
-
 import crypto from "crypto";
 
 /**
@@ -60,7 +59,7 @@ export class HMACService {
   }
 
   /**
-   * Calculates HMAC signature for the given payload
+   * Calculates HMAC signature for the given payload using SHA512
    * @param {Payload} payload - The payload to sign
    * @returns {string} Base64 encoded HMAC signature
    * @throws {Error} If signature calculation fails
@@ -69,9 +68,9 @@ export class HMACService {
     try {
       this.#validatePayload(payload);
 
-      // Create HMAC instance with SHA256
+      // Create HMAC instance with SHA512
       const hmac = crypto.createHmac(
-        "sha256",
+        "sha512",
         Buffer.from(this.#hmacKey, "utf8")
       );
 
@@ -94,7 +93,6 @@ export class HMACService {
   #validatePayload(payload) {
     const requiredFields = ["statusPayment", "primeClientPhone", "amount"];
     const missingFields = requiredFields.filter((field) => !payload?.[field]);
-
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
     }

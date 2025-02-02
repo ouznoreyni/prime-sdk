@@ -3,7 +3,6 @@
  * This file demonstrates how to integrate the HMACService into an Express.js application
  * for secure API endpoint verification.
  */
-
 import dotenv from "dotenv";
 import express from "express";
 import { HMACService } from "./HMACService.js";
@@ -16,7 +15,6 @@ const requiredEnvVars = ["HMAC_KEY", "API_KEY"];
 const missingEnvVars = requiredEnvVars.filter(
   (varName) => !process.env[varName]
 );
-
 if (missingEnvVars.length > 0) {
   console.error(
     `Missing required environment variables: ${missingEnvVars.join(", ")}`
@@ -63,7 +61,6 @@ app.post("/api/callback", (req, res) => {
   const missingHeaders = requiredHeaders.filter(
     (header) => !normalizedHeaders[header]
   );
-
   if (missingHeaders.length > 0) {
     return res.status(401).json({
       status: "error",
@@ -73,7 +70,6 @@ app.post("/api/callback", (req, res) => {
 
   // Verify request
   const verification = hmacService.verify(normalizedHeaders, req.body);
-
   if (!verification.isValid) {
     return res.status(401).json({
       status: "error",
