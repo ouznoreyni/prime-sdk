@@ -206,13 +206,9 @@ L’**API Marchand**  permet aux partenaires commerciaux d’intégrer un systè
 
 2. **Validation de la Signature HMAC** :  
    - Concaténez : `statusPayment + primeClientPhone + amount`.  
-     ```javascript  
-     const data = "SUCCESS+221761234567+5000";  
-     ```  
+    
    - Générez le HMAC avec la `hmacKey` (déchiffrée) :  
-     ```javascript  
-     const hmac = crypto.createHmac('sha256', hmacKey).update(data).digest('hex');  
-     ```  
+     
    - Comparez avec `X-HMAC-SIGNATURE` pour authenticité.  
 
 3. **Actions** :  
