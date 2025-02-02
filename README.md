@@ -1,16 +1,11 @@
 **Documentation de l'API Marchand Distant**  
 
-L’**API Marchand Distant** permet aux partenaires commerciaux d’intégrer un système de paiement sécurisé directement dans leurs applications ou sites web. Conçue pour les transactions programmatiques, cette API offre une flexibilité totale tout en garantissant la sécurité des données et la traçabilité des opérations.  
+L’**API Marchand**  permet aux partenaires commerciaux d’intégrer un système de paiement sécurisé directement dans leurs applications ou sites web. Conçue pour initier des transactions sur primes, elle offre une flexibilité optimale tout en assurant la sécurité des données et la traçabilité des opérations.
 
-### **Avantages Clés**  
-- **Intégration Simplifiée** : Des endpoints RESTful bien documentés.  
-- **Sécurité Renforcée** : Authentification par clé API, chiffrement AES256, et signatures HMAC.  
-- **Notifications en Temps Réel** : Callbacks automatiques pour informer du statut des paiements.  
-- **Compatibilité** : Supporte les applications web, mobiles, ou systèmes backend.  
 
 ### **Prérequis**  
-1. Compte marchand validé sur la plateforme.  
-2. Accès administrateur pour générer les clés API.  
+1. Compte marchand admin validé sur la plateforme.  
+2. Accès administrateur marchand pour générer les clés API.  
 3. Serveur HTTPS pour recevoir les callbacks.  
 
 ---
@@ -18,11 +13,9 @@ L’**API Marchand Distant** permet aux partenaires commerciaux d’intégrer un
 ## **Étapes d’Intégration**  
 
 ### **Étape 1 : Génération des Clés API**  
-**Objectif** : Obtenir les identifiants pour authentifier les requêtes.  
+**Objectif** : Obtenir les identifiants nécessaires pour authentifier les requêtes. Ces identifiants sont envoyés à l'adresse e-mail de l'administrateur du marchand lors de la génération des clés API.
 
-1. **Via l'interface** :  
-   soon
-2. **Email** :  
+1. **Email format** :  
    ```
     "apiKey": "prime_api_key_550e8400...",  
     "apiSecret": "prime_api_secret_550e8400...",  
@@ -65,19 +58,17 @@ L’**API Marchand Distant** permet aux partenaires commerciaux d’intégrer un
      "status": "PENDING"  
    }  
    ```  
-5. **Actions** :  
-   - Envoyez le `deepLink` au client (SMS, email, ou notification in-app).  
 
 ---
 
 ### **Étape 3 : Gestion des Callbacks**  
-**Objectif** : Recevoir et valider les notifications de statut de paiement.  
+**Objectif** : Recevoir un callback lorsque votre client valide son premier paiement.
 
 1. **Format du Callback** :  
    ```http  
    POST https://votre-site.com/callback  
-   X-API-KEY: "prime_api_key_550e8400..."  
-   X-HMAC-SIGNATURE: "signature_hmac"  
+   X-API-KEY: "prime_api_key_550e8400... API KEY"  
+   X-HMAC-SIGNATURE: "signature_hmac:AES HASH MAC using statusPayment+primeClientMisdn+amount using raw application hmacKey"  
    ```  
    ```json  
    {  
@@ -108,21 +99,7 @@ L’**API Marchand Distant** permet aux partenaires commerciaux d’intégrer un
 
 ---
 
-### **Étape 4 : Gestion des Erreurs et Re-tentatives**  
-1. **Scénarios d’Échec** :  
-   - Réseau instable, timeout, ou réponse HTTP ≠ 200.  
-2. **Politique de Re-tentative** :  
-   - 3 tentatives automatiques avec délai exponentiel (ex: 1 min, 5 min, 15 min).  
-3. **Journalisation** :  
-   - Logguez toutes les tentatives et erreurs pour audit.  
-
----
-
-### **Étape 5 : Surveillance et Reporting**  
-1. **Dashboard** :  
-   - Consultez les transactions en temps réel via le portail marchand.  
-2. **Alertes** :  
-   - Configurez des notifications pour les échecs de callback ou paiements refusés.  
+### **Étape 5 : Surveillance**  
 3. **Support** :  
    - Contactez `support@prime.store` en cas de problème persistant.  
 
@@ -130,14 +107,12 @@ L’**API Marchand Distant** permet aux partenaires commerciaux d’intégrer un
 
 ## **Bonnes Pratiques**  
 - **Test en Sandbox** : Utilisez l’environnement de test avant le déploiement en production.  
-- **Cycle de Vie des Clés** : Régénérez les clés API tous les 3 mois.  
 - **Validation des Entrées** : Vérifiez toujours le format des numéros de téléphone et des URLs.  
 
 ---
 
 ## **Ressources Utiles**  
-- **Documentation Technique** : [https://docs.prime.store](https://docs.prime.store)  
-- **Bibliothèques SDK** : Voir l'utilisation des SDK Java, Node.js, PHP.  
+- **Utilisation** : Voir l'utilisation des SDK Java, Node.js, PHP.  
 - **Support 24/7** : soon.  
 
 **💡 Conseil** : Commencez avec des petits montants pour valider l’intégration avant de traiter des transactions critiques.

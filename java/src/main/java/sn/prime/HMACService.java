@@ -7,34 +7,35 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
- * HMAC Verification Service for validating webhook requests
+ * HMAC Verification Service for validating webhook requests using SHA-512.
  */
 public class HMACService {
     private final String hmacKey;
     private final String apiKey;
 
     /**
-     * Creates a new HMAC Service instance
+     * Creates a new HMAC Service instance with provided HMAC_KEY and API_KEY.
      *
-     * @param config Configuration map containing hmacKey and apiKey
+     * @param hmacKey The secret key used for HMAC signature generation
+     * @param apiKey  The API key for request authentication
      * @throws IllegalArgumentException if required configuration is missing
      */
-    public HMACService(Map<String, String> config) {
-        if (config.get("hmacKey") == null || config.get("apiKey") == null) {
+    public HMACService(String hmacKey, String apiKey) {
+        if (hmacKey == null || hmacKey.isEmpty() || apiKey == null || apiKey.isEmpty()) {
             throw new IllegalArgumentException("HMAC key and API key are required");
         }
-        this.hmacKey = config.get("hmacKey");
-        this.apiKey = config.get("apiKey");
+        this.hmacKey = hmacKey;
+        this.apiKey = apiKey;
     }
 
     /**
-     * Verifies request headers and payload signature
+     * Verifies request headers and payload signature.
      *
      * @param headers Request headers containing X-Api-Key and X-Hmac-Signature
-     * @param payload Request payload
+     * @param payload Request payload as a Payload object
      * @return VerificationResult containing validation status and error message if any
      */
-    public VerificationResult verify(Map<String, String> headers, Map<String, String> payload) {
+    public VerificationResult verify(Map<String, String> headers, Payload payload) {
         try {
             // Check API key
             String providedApiKey = headers.get("x-api-key");
@@ -60,34 +61,32 @@ public class HMACService {
     }
 
     /**
-     * Calculates HMAC signature for the given payload
+     * Calculates HMAC signature for the given payload using SHA-512.
      *
-     * @param payload Request payload
+     * @param payload Request payload as a Payload object
      * @return Base64 encoded HMAC signature
      * @throws RuntimeException if signature calculation fails
      */
-    public String calculateSignature(Map<String, String> payload) {
+    public String calculateSignature(Payload payload) {
         try {
             // Validate required fields
             validatePayload(payload);
 
             // Build data string
-            String dataToSign = payload.get("statusPayment") +
-                    payload.get("primeClientPhone") +
-                    payload.get("amount");
+            String dataToSign = payload.statusPayment() +
+                    payload.primeClientPhone() +
+                    payload.amount();
 
-            // Create HMAC SHA256 instance
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+            // Create HMAC SHA-512 instance
+            Mac sha512Hmac = Mac.getInstance("HmacSHA512");
             SecretKeySpec secretKey = new SecretKeySpec(
                     hmacKey.getBytes(StandardCharsets.UTF_8),
-                    "HmacSHA256"
+                    "HmacSHA512"
             );
-            sha256Hmac.init(secretKey);
+            sha512Hmac.init(secretKey);
 
             // Calculate HMAC
-            byte[] hmacBytes = sha256Hmac.doFinal(
-                    dataToSign.getBytes(StandardCharsets.UTF_8)
-            );
+            byte[] hmacBytes = sha512Hmac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8));
 
             // Encode to Base64
             return Base64.getEncoder().encodeToString(hmacBytes);
@@ -96,26 +95,40 @@ public class HMACService {
         }
     }
 
-    private void validatePayload(Map<String, String> payload) {
-        String[] requiredFields = {"statusPayment", "primeClientPhone", "amount"};
-        for (String field : requiredFields) {
-            if (!payload.containsKey(field) || payload.get(field) == null || payload.get(field).isEmpty()) {
-                throw new IllegalArgumentException("Missing required field: " + field);
-            }
+    /**
+     * Validates the payload for required fields.
+     *
+     * @param payload Request payload as a Payload object
+     * @throws IllegalArgumentException if any required field is missing or invalid
+     */
+    private void validatePayload(Payload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("Payload cannot be null");
+        }
+
+        if (payload.statusPayment() == null || payload.statusPayment().isEmpty()) {
+            throw new IllegalArgumentException("Missing required field: statusPayment");
+        }
+
+        if (payload.primeClientPhone() == null || payload.primeClientPhone().isEmpty()) {
+            throw new IllegalArgumentException("Missing required field: primeClientPhone");
+        }
+
+        if (payload.amount() == null || payload.amount().isEmpty()) {
+            throw new IllegalArgumentException("Missing required field: amount");
         }
     }
 
     /**
-         * Result class for verification operations
-         */
-        public record VerificationResult(boolean isValid, String error) {
-
+     * Result class for verification operations.
+     */
+    public record VerificationResult(boolean isValid, String error) {
         @Override
-            public String toString() {
-                return "VerificationResult{" +
-                        "isValid=" + isValid +
-                        (error != null ? ", error='" + error + "'" : "") +
-                        '}';
-            }
+        public String toString() {
+            return "VerificationResult{" +
+                    "isValid=" + isValid +
+                    (error != null ? ", error='" + error + "'" : "") +
+                    '}';
         }
+    }
 }

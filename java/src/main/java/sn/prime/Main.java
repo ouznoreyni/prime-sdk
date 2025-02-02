@@ -1,62 +1,80 @@
 package sn.prime;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class Main {
+    private static final Properties ENV = new Properties();
+
+
     public static void main(String[] args) {
-        // Configuration
-        Map<String, String> config = new HashMap<>();
-        config.put("hmacKey", "prime_hmac_key_f226959b-50a3-4cd2-9a2f-64b44cdb1258");
-        config.put("apiKey", "prime_api_key_2bc2e105-8432-4a81-be8a-dbfb0209eba4");
+        try {
+            // Load environment variables from .env file
+            loadEnv();
 
-        // Initialize service
-        HMACService hmacService = new HMACService(config);
+            // Get environment variables
+            String hmacKey = ENV.getProperty("HMAC_KEY");
+            String apiKey = ENV.getProperty("API_KEY");
 
-        // Test headers (from real request)
-        Map<String, String> headers = new HashMap<>();
-        headers.put("host", "api-mock.cortech.cloud");
-        headers.put("x-real-ip", "154.124.76.187");
-        headers.put("x-forwarded-for", "154.124.76.187");
-        headers.put("x-forwarded-proto", "https");
-        headers.put("connection", "upgrade");
-        headers.put("content-length", "346");
-        headers.put("accept-encoding", "gzip");
-        headers.put("user-agent", "ReactorNetty/1.1.22");
-        headers.put("accept", "application/json");
-        headers.put("content-type", "application/json");
-        headers.put("x-api-key", "prime_api_key_2bc2e105-8432-4a81-be8a-dbfb0209eba4");
-        headers.put("x-hmac-signature", "X+o3GN/avoky0h1nEGDdqDuPBhmViuDDF4k3YNgyEto=");
+            if (hmacKey == null || apiKey == null) {
+                throw new RuntimeException("Required environment variables HMAC_KEY and API_KEY must be set");
+            }
 
-        // Test payload (from real request)
-        Map<String, String> payload = new HashMap<>();
-        payload.put("callbackUrl", "https://api-mock.cortech.cloud/api/m/3dfce244-b7ea-48d4-9ff9-cbe8b06351cd");
-        payload.put("amount", "1.00");
-        payload.put("primeClientPhone", "+221767760904");
-        payload.put("externalRefId", "externalRefId2");
-        payload.put("statusPayment", "SUCCEED");
-        payload.put("datePayment", "2025-01-16T15:40:26.128312Z");
-        payload.put("primeInternalPaymentRef", "649a4fdc-a865-4c00-b8d4-ce4ac501fb60");
+            // Initialize HMACService
+            HMACService hmacService = new HMACService(hmacKey, apiKey);
 
-        System.out.println("Testing with real request data:");
-        System.out.println("=============================");
+            // Example headers
+            Map<String, String> headers = new HashMap<>();
+            headers.put("x-api-key", "prime_api_key_ec09544f-5fc1-416f-89d6-7ed7bfbf5e4d");
+            headers.put("x-hmac-signature", "kCvGd2x3h04q4HPG7FQ1ObGK/c1s6TmoxZC8rRi5gWLJaLuwNajg1mXuOPdXicggWL46BNTz6fK7iE7srcej+Q==");
 
-        // Test verification
-        HMACService.VerificationResult result = hmacService.verify(headers, payload);
-        System.out.println("Verification Result: " + (result.isValid() ? "VALID" : "INVALID"));
-        if (!result.isValid()) {
-            System.out.println("Error: " + result.error());
+            // Example payload
+            var payload = new Payload(
+                    "https://api-mock.cortech.cloud/api/m/95691c2b-e38c-44b2-986f-df",
+                    "6.00",
+                    "+221767760904",
+                    "externalRefId4",
+                    "SUCCEED",
+                    "2025-02-02T21:28:48.351596Z",
+                    "dab17de0-4ed8-4d4a-92d1-a6bba2491bd4"
+            );
+
+            // Verify the request
+            var result = hmacService.verify(headers, payload);
+            System.out.println(result);
+
+        } catch (IOException e) {
+            System.err.println("Error loading .env file: " + e.getMessage());
+            System.exit(1);
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            System.exit(1);
         }
+    }
 
-        // Show signature comparison
-        System.out.println("\nSignature Comparison:");
-        System.out.println("Expected Signature: " + headers.get("x-hmac-signature"));
-        System.out.println("Calculated Signature: " + hmacService.calculateSignature(payload));
-
-        // Show data used for signature
-        String dataString = payload.get("statusPayment") +
-                payload.get("primeClientPhone") +
-                payload.get("amount");
-        System.out.println("\nData String Used: " + dataString);
+    private static void loadEnv() throws IOException {
+        Path envPath = Path.of(".env");
+        if (Files.exists(envPath)) {
+            Files.lines(envPath)
+                    .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
+                    .forEach(line -> {
+                        String[] parts = line.split("=", 2);
+                        if (parts.length == 2) {
+                            String key = parts[0].trim();
+                            String value = parts[1].trim();
+                            // Remove quotes if present
+                            if (value.startsWith("\"") && value.endsWith("\"")) {
+                                value = value.substring(1, value.length() - 1);
+                            }
+                            ENV.setProperty(key, value);
+                        }
+                    });
+        } else {
+            throw new IOException(".env file not found in: " + envPath.toAbsolutePath());
+        }
     }
 }

@@ -2,7 +2,7 @@
  * @fileoverview HMAC Verification SDK
  * This SDK provides HMAC-based request verification functionality for secure API communications.
  * It implements HMAC-SHA512 signature generation and verification along with API key validation.
- * @version 1.0.1
+ * @version 1.0.0
  */
 import crypto from "crypto";
 
