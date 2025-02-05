@@ -232,5 +232,3 @@ L’**API Marchand**  permet aux partenaires commerciaux d’intégrer un systè
 ## **Ressources Utiles**  
 - **Utilisation** : Voir l'utilisation des SDK Java, Node.js, PHP.  
 - **Support 24/7** : soon.  
-
-**💡 Conseil** : Commencez avec des petits montants pour valider l’intégration avant de traiter des transactions critiques.
