@@ -207,7 +207,7 @@ L’**API Marchand**  permet aux partenaires commerciaux d’intégrer un systè
 2. **Validation de la Signature HMAC** :  
    - Concaténez : `statusPayment + primeClientPhone + amount`.  
     
-   - Générez le HMAC avec la `hmacKey` (déchiffrée) :  
+   - Générez le HMAC(512) avec la `hmacKey` (déchiffrée) :  
      
    - Comparez avec `X-HMAC-SIGNATURE` pour authenticité.  
 
